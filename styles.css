@@ -8,6 +8,12 @@
   --accent: #7a8fa3;
   --accent-soft: #eef1f4;
   --warm: #ede8df;
+  --green: #7d8c78;
+  --green-soft: #eef3ec;
+  --orange: #d4a26a;
+  --orange-soft: #f5f1e8;
+  --red: #c97b7b;
+  --red-soft: #f5eaea;
   --radius: 24px;
   --radius-sm: 16px;
   --radius-xs: 10px;
@@ -41,7 +47,7 @@ body {
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   padding: 0 4px;
 }
 .brand {
@@ -50,12 +56,33 @@ body {
   letter-spacing: -0.3px;
   color: var(--ink);
 }
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .stats {
   font-size: 14px;
   color: var(--ink-3);
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.reset-all {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.reset-all:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
 }
 .dot {
   width: 8px;
@@ -290,6 +317,11 @@ body {
   transition: color 0.15s;
 }
 .text-btn:hover { color: var(--ink); }
+.text-btn.text-main {
+  color: var(--accent);
+  font-weight: 700;
+}
+.text-btn.text-main:hover { color: #5e7182; }
 
 @media (max-width: 420px) {
   .app { padding: 14px 12px 12px; }

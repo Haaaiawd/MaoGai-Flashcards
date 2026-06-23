@@ -35,7 +35,8 @@
     markUnknown: $('mark-unknown'),
     btnPrev: $('btn-prev'),
     btnNext: $('btn-next'),
-    reset: $('reset'),
+    resetCard: $('reset-card'),
+    resetAll: $('reset-all'),
   };
 
   function load() {
@@ -179,8 +180,17 @@
     next(state);
   }
 
+  function resetCard() {
+    dom.sheetKeywords.hidden = true;
+    dom.sheetJingle.hidden = true;
+    dom.sheetAnswer.hidden = true;
+    dom.btnKeywords.disabled = false;
+    dom.btnJingle.disabled = false;
+    dom.btnAnswer.disabled = false;
+  }
+
   function resetAll() {
-    if (!confirm('确定重置全部进度？')) return;
+    if (!confirm('确定重置全部学习进度？此操作不可恢复。')) return;
     statusMap = {};
     save();
     setMode('order');
@@ -194,7 +204,8 @@
   dom.markUnknown.addEventListener('click', () => mark(STATE.UNKNOWN));
   dom.btnPrev.addEventListener('click', prev);
   dom.btnNext.addEventListener('click', () => next());
-  dom.reset.addEventListener('click', resetAll);
+  dom.resetCard.addEventListener('click', resetCard);
+  dom.resetAll.addEventListener('click', resetAll);
 
   document.querySelectorAll('.mode-btn').forEach(b => {
     b.addEventListener('click', () => setMode(b.dataset.mode));

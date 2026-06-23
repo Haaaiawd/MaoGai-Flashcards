@@ -10,11 +10,14 @@
   <div class="app">
     <header class="topbar">
       <h1 class="brand">一天背完作战台</h1>
-      <div class="stats">
-        <span id="stat-total">0</span> 题
-        <span class="dot known"></span><span id="stat-known">0</span>
-        <span class="dot fuzzy"></span><span id="stat-fuzzy">0</span>
-        <span class="dot unknown"></span><span id="stat-unknown">0</span>
+      <div class="top-actions">
+        <div class="stats">
+          <span id="stat-total">0</span> 题
+          <span class="dot known"></span><span id="stat-known">0</span>
+          <span class="dot fuzzy"></span><span id="stat-fuzzy">0</span>
+          <span class="dot unknown"></span><span id="stat-unknown">0</span>
+        </div>
+        <button class="reset-all" id="reset-all">重置全部</button>
       </div>
     </header>
 
@@ -62,7 +65,7 @@
       </div>
       <div class="secondary">
         <button class="text-btn" id="btn-prev">上一题</button>
-        <button class="text-btn" id="reset">重置</button>
+        <button class="text-btn text-main" id="reset-card">重练本题</button>
         <button class="text-btn" id="btn-next">下一题</button>
       </div>
     </div>
