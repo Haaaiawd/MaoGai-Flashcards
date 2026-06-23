@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一天背完作战台</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1 class="brand">一天背完作战台</h1>
+      <div class="stats">
+        <span id="stat-total">0</span> 题
+        <span class="dot known"></span><span id="stat-known">0</span>
+        <span class="dot fuzzy"></span><span id="stat-fuzzy">0</span>
+        <span class="dot unknown"></span><span id="stat-unknown">0</span>
+      </div>
+    </header>
+
+    <nav class="modes">
+      <button class="mode-btn active" data-mode="order">顺序</button>
+      <button class="mode-btn" data-mode="random">随机</button>
+      <button class="mode-btn" data-mode="weak">弱项</button>
+    </nav>
+
+    <div class="card-stage">
+      <div class="card" id="card">
+        <div class="card-header">
+          <span class="card-index" id="card-index">—</span>
+          <span class="chapter" id="chapter">—</span>
+          <span class="status" id="status">未练</span>
+        </div>
+        <div class="question" id="question">加载中…</div>
+        <div class="scroll-area" id="scroll-area">
+          <div class="hint-sheet" id="sheet-keywords" hidden>
+            <div class="sheet-title">骨架</div>
+            <div class="sheet-body" id="keywords-body"></div>
+          </div>
+          <div class="hint-sheet sheet-jingle" id="sheet-jingle" hidden>
+            <div class="sheet-title">串记</div>
+            <div class="sheet-body" id="jingle-body"></div>
+          </div>
+          <div class="hint-sheet sheet-answer" id="sheet-answer" hidden>
+            <div class="sheet-title">全文</div>
+            <div class="sheet-body" id="answer-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="reveal-bar">
+        <button class="chip" id="btn-keywords">骨架</button>
+        <button class="chip" id="btn-jingle">串记</button>
+        <button class="chip chip-main" id="btn-answer">全文</button>
+      </div>
+      <div class="mark-bar">
+        <button class="mark known" id="mark-known">会了</button>
+        <button class="mark fuzzy" id="mark-fuzzy">模糊</button>
+        <button class="mark unknown" id="mark-unknown">不会</button>
+      </div>
+      <div class="secondary">
+        <button class="text-btn" id="btn-prev">上一题</button>
+        <button class="text-btn" id="reset">重置</button>
+        <button class="text-btn" id="btn-next">下一题</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
