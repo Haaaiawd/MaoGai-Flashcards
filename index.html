@@ -63,6 +63,7 @@
         <button class="chip" id="btn-keywords">骨架</button>
         <button class="chip" id="btn-jingle">串记</button>
         <button class="chip chip-main" id="btn-answer">全文</button>
+        <button class="chip chip-zoom" id="btn-zoom">放大</button>
       </div>
       <div class="mark-bar">
         <button class="mark known" id="mark-known">会了</button>
@@ -75,6 +76,14 @@
         <button class="text-btn" id="btn-next">下一题</button>
       </div>
     </div>
+  </div>
+
+  <div class="zoom-overlay" id="zoom-overlay" hidden>
+    <div class="zoom-header">
+      <span class="zoom-title" id="zoom-title">背诵模式</span>
+      <button class="zoom-close" id="zoom-close">关闭</button>
+    </div>
+    <div class="zoom-body" id="zoom-body"></div>
   </div>
 
   <script src="questions.js"></script>

@@ -37,6 +37,10 @@
     btnNext: $('btn-next'),
     resetCard: $('reset-card'),
     resetAll: $('reset-all'),
+    btnZoom: $('btn-zoom'),
+    zoomOverlay: $('zoom-overlay'),
+    zoomClose: $('zoom-close'),
+    zoomBody: $('zoom-body'),
   };
 
   function load() {
@@ -44,6 +48,19 @@
     catch (e) { return {}; }
   }
   function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap)); }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightKeywords(text, keywords) {
+    let html = escapeHtml(text);
+    keywords.forEach(k => {
+      const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      html = html.replace(new RegExp(escaped, 'g'), `<span class="answer-kw">${k}</span>`);
+    });
+    return html;
+  }
 
   function buildList() {
     if (mode === 'weak') {
@@ -95,7 +112,7 @@
       jingleHtml = jingleHtml.split(k).join(`<span class="jingle-keyword">${k}</span>`);
     });
     dom.jingleBody.innerHTML = jingleHtml;
-    dom.answerBody.textContent = q.answer;
+    dom.answerBody.innerHTML = highlightKeywords(q.answer, q.keywords);
 
     dom.sheetKeywords.hidden = true;
     dom.sheetJingle.hidden = true;
@@ -196,6 +213,46 @@
     setMode('order');
   }
 
+  function openZoom() {
+    if (list.length === 0) return;
+    const idx = list[cursor];
+    const q = QUESTIONS[idx];
+
+    let jingleHtml = q.jingle;
+    q.keywords.forEach(k => {
+      jingleHtml = jingleHtml.split(k).join(`<span class="zoom-jingle-keyword">${k}</span>`);
+    });
+
+    let html = '';
+    html += `<div class="zoom-chapter">${q.chapter}</div>`;
+    html += `<div class="zoom-question">${escapeHtml(q.question)}</div>`;
+
+    if (!dom.sheetKeywords.hidden) {
+      html += '<div class="zoom-sheet"><div class="zoom-sheet-title">骨架</div><div class="zoom-sheet-body">';
+      html += '<div class="zoom-kw-list">' +
+        q.keywords.map((k, n) => `<div class="zoom-kw-item"><span class="zoom-kw-num">${n + 1}</span><span class="zoom-kw-text">${escapeHtml(k)}</span></div>`).join('') +
+        '</div>';
+      html += '</div></div>';
+    }
+
+    if (!dom.sheetJingle.hidden) {
+      html += '<div class="zoom-sheet zoom-sheet-jingle"><div class="zoom-sheet-title">串记</div><div class="zoom-sheet-body">' + jingleHtml + '</div></div>';
+    }
+
+    if (!dom.sheetAnswer.hidden) {
+      html += '<div class="zoom-sheet zoom-sheet-answer"><div class="zoom-sheet-title">全文</div><div class="zoom-sheet-body">' + highlightKeywords(q.answer, q.keywords) + '</div></div>';
+    }
+
+    dom.zoomBody.innerHTML = html;
+    dom.zoomOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeZoom() {
+    dom.zoomOverlay.hidden = true;
+    document.body.style.overflow = '';
+  }
+
   dom.btnKeywords.addEventListener('click', () => show('keywords'));
   dom.btnJingle.addEventListener('click', () => show('jingle'));
   dom.btnAnswer.addEventListener('click', () => show('answer'));
@@ -206,6 +263,11 @@
   dom.btnNext.addEventListener('click', () => next());
   dom.resetCard.addEventListener('click', resetCard);
   dom.resetAll.addEventListener('click', resetAll);
+  dom.btnZoom.addEventListener('click', openZoom);
+  dom.zoomClose.addEventListener('click', closeZoom);
+  dom.zoomOverlay.addEventListener('click', (e) => {
+    if (e.target === dom.zoomOverlay) closeZoom();
+  });
 
   document.querySelectorAll('.mode-btn').forEach(b => {
     b.addEventListener('click', () => setMode(b.dataset.mode));
@@ -213,6 +275,8 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') { closeZoom(); return; }
+    if (!dom.zoomOverlay.hidden) return;
     switch (e.key) {
       case '1': show('keywords'); break;
       case '2': show('jingle'); break;
