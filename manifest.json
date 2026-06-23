@@ -1,0 +1,23 @@
+{
+  "name": "一天背完作战台",
+  "short_name": "背完",
+  "description": "毛概速背卡片，骨架 / 串记 / 全文逐步揭示",
+  "start_url": "/MaoGai-Flashcards/",
+  "scope": "/MaoGai-Flashcards/",
+  "display": "standalone",
+  "background_color": "#f5f6f4",
+  "theme_color": "#6b8c6b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
