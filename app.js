@@ -53,31 +53,63 @@
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // 常见缩写 → 全文中的展开形式
+  const ALIAS_MAP = {
+    '马列': ['马克思列宁主义', '马克思', '列宁'],
+    '马': ['马克思'],
+    '两个结合': ['相结合'],
+    '两个联盟': ['联盟'],
+    '四个阶段': ['阶段'],
+    '一化是主体': ['工业化'],
+    '三改是两翼': ['三改'],
+    '重轻农': ['重工业', '轻工业', '农业'],
+    '关键在党': ['关键在于'],
+  };
+
   function highlightKeywords(text, keywords) {
     const ranges = [];
 
     keywords.forEach(kw => {
-      // 找关键词在全文中最长的可匹配子串（至少 3 字）
-      let best = null;
-      if (text.includes(kw)) {
-        best = kw;
-      } else {
-        for (let len = kw.length - 1; len >= 3; len--) {
-          let found = false;
-          for (let start = 0; start <= kw.length - len; start++) {
-            const sub = kw.substring(start, start + len);
-            if (text.includes(sub)) { best = sub; found = true; break; }
+      const matchTargets = [kw];
+      // 加别名
+      if (ALIAS_MAP[kw]) matchTargets.push(...ALIAS_MAP[kw]);
+      // 也对短关键词查别名
+      for (const alias in ALIAS_MAP) {
+        if (kw.includes(alias) && !matchTargets.includes(alias)) {
+          matchTargets.push(...ALIAS_MAP[alias]);
+        }
+      }
+
+      // 对每个匹配目标，找全文中所有出现位置
+      // 1. 精确匹配
+      // 2. 模糊匹配（最长子串，至少2字）
+      matchTargets.forEach(target => {
+        if (text.includes(target)) {
+          let idx = 0;
+          while ((idx = text.indexOf(target, idx)) !== -1) {
+            ranges.push([idx, idx + target.length]);
+            idx += target.length;
           }
-          if (found) break;
+        } else if (target.length >= 3) {
+          // 模糊：找最长可匹配子串
+          for (let len = target.length - 1; len >= 2; len--) {
+            let found = false;
+            for (let start = 0; start <= target.length - len; start++) {
+              const sub = target.substring(start, start + len);
+              if (text.includes(sub)) {
+                let idx2 = 0;
+                while ((idx2 = text.indexOf(sub, idx2)) !== -1) {
+                  ranges.push([idx2, idx2 + sub.length]);
+                  idx2 += sub.length;
+                }
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
         }
-      }
-      if (best) {
-        let idx = 0;
-        while ((idx = text.indexOf(best, idx)) !== -1) {
-          ranges.push([idx, idx + best.length]);
-          idx += best.length;
-        }
-      }
+      });
     });
 
     if (ranges.length === 0) return escapeHtml(text);
