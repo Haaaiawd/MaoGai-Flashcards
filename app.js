@@ -53,79 +53,59 @@
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // 常见缩写 → 全文中的展开形式
+  // ── 高亮引擎 v3：滑窗精确匹配 + 极小别名表 ──
+  // 思路：关键词拆成所有 2~4 字子串，从长到短去全文精确匹配。
+  // 只高亮匹配到的精确片段，不会过度高亮整个句子。
+  // 缩写（如"马列"→"马克思列宁主义"）用别名表兜底。
+
   const ALIAS_MAP = {
     '马列': ['马克思列宁主义', '马克思', '列宁'],
-    '马': ['马克思'],
-    '两个结合': ['相结合'],
-    '两个联盟': ['联盟'],
-    '四个阶段': ['阶段'],
+    '重轻农': ['重工业', '轻工业', '农业'],
     '一化是主体': ['工业化', '主体'],
     '三改是两翼': ['三改', '两翼'],
-    '重轻农': ['重工业', '轻工业', '农业'],
-    '重轻农关系': ['重工业和轻工业、农业的关系', '重工业', '轻工业'],
-    '沿海内地关系': ['沿海工业和内地工业的关系', '沿海工业', '内地工业'],
-    '经济国防关系': ['经济建设和国防建设的关系', '经济建设', '国防建设'],
-    '中央地方关系': ['中央和地方的关系'],
-    '中国外国关系': ['中国和外国的关系'],
-    '革命反革命关系': ['革命和反革命的关系', '反革命'],
-    '汉族少数民族关系': ['汉族和少数民族的关系'],
-    '国家和非党关系': ['党和非党的关系'],
-    '关键在党': ['关键在于'],
-    '游击战运动战': ['游击战', '运动战'],
-    '人民是历史创造者': ['人民群众是历史的创造者', '历史的创造者'],
-    '改造企业也改造人': ['对企业的改造和对人的改造', '企业的改造', '人的改造'],
-    '发展民主健全法制': ['发展社会主义民主', '健全社会主义法制', '社会主义民主', '社会主义法制'],
-    '农业国变工业国': ['农业国', '工业国'],
-    '富强民主文明现代化': ['富强、民主、文明的社会主义现代化', '富强', '民主', '文明', '现代化'],
-    '计划市场不是制度标志': ['计划经济和市场经济不是社会制度的标志', '不是社会制度的标志'],
-    '计划市场都是经济手段': ['计划和市场都是经济手段', '经济手段'],
-    '改革发展稳定关系': ['改革、发展、稳定'],
-    '低级到高级国家资本主义': ['从低级到高级的国家资本主义', '国家资本主义'],
-    '建设与改造并举': ['建设和社会主义改造并举', '改造并举'],
-    '解放与发展生产力统一': ['解放生产力与发展生产力', '解放生产力', '发展生产力'],
   };
 
-  // 通用高亮：text 中匹配 keywords（含别名+模糊），用 className 包裹
+  function collectAll(text, target, ranges) {
+    let idx = 0;
+    while ((idx = text.indexOf(target, idx)) !== -1) {
+      ranges.push([idx, idx + target.length]);
+      idx += target.length;
+    }
+  }
+
   function highlightText(text, keywords, className) {
     const ranges = [];
 
     keywords.forEach(kw => {
-      const matchTargets = [kw];
-      if (ALIAS_MAP[kw]) matchTargets.push(...ALIAS_MAP[kw]);
+      // ── 策略1：精确匹配 + 别名 ──
+      const targets = [kw];
+      if (ALIAS_MAP[kw]) targets.push(...ALIAS_MAP[kw]);
       for (const alias in ALIAS_MAP) {
-        if (kw.includes(alias) && !matchTargets.includes(alias)) {
-          matchTargets.push(...ALIAS_MAP[alias]);
+        if (kw.includes(alias) && !targets.includes(alias)) {
+          targets.push(...ALIAS_MAP[alias]);
         }
       }
+      targets.forEach(t => {
+        if (text.includes(t)) collectAll(text, t, ranges);
+      });
 
-      matchTargets.forEach(target => {
-        if (text.includes(target)) {
-          let idx = 0;
-          while ((idx = text.indexOf(target, idx)) !== -1) {
-            ranges.push([idx, idx + target.length]);
-            idx += target.length;
-          }
-        } else if (target.length >= 2) {
-          // 模糊：从最长子串往下找，至少2字
-          for (let len = target.length - 1; len >= 2; len--) {
-            let found = false;
-            for (let start = 0; start <= target.length - len; start++) {
-              const sub = target.substring(start, start + len);
-              if (text.includes(sub)) {
-                let idx2 = 0;
-                while ((idx2 = text.indexOf(sub, idx2)) !== -1) {
-                  ranges.push([idx2, idx2 + sub.length]);
-                  idx2 += sub.length;
-                }
-                found = true;
-                break;
-              }
+      // ── 策略2：滑窗精确匹配（核心）──
+      // 关键词拆成所有 6→5→4→3→2 字子串，从长到短去全文找
+      // 2字子串做频率过滤：出现>6次视为泛词，跳过
+      for (let len = Math.min(kw.length, 6); len >= 2; len--) {
+        for (let start = 0; start <= kw.length - len; start++) {
+          const sub = kw.substring(start, start + len);
+          if (text.includes(sub)) {
+            if (len === 2) {
+              // 频率过滤：2字泛词不高亮
+              let count = 0, idx2 = 0;
+              while ((idx2 = text.indexOf(sub, idx2)) !== -1) { count++; idx2 += sub.length; }
+              if (count > 6) continue;
             }
-            if (found) break;
+            collectAll(text, sub, ranges);
           }
         }
-      });
+      }
     });
 
     if (ranges.length === 0) return escapeHtml(text);
