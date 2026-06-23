@@ -66,23 +66,19 @@
     '关键在党': ['关键在于'],
   };
 
-  function highlightKeywords(text, keywords) {
+  // 通用高亮：text 中匹配 keywords（含别名+模糊），用 className 包裹
+  function highlightText(text, keywords, className) {
     const ranges = [];
 
     keywords.forEach(kw => {
       const matchTargets = [kw];
-      // 加别名
       if (ALIAS_MAP[kw]) matchTargets.push(...ALIAS_MAP[kw]);
-      // 也对短关键词查别名
       for (const alias in ALIAS_MAP) {
         if (kw.includes(alias) && !matchTargets.includes(alias)) {
           matchTargets.push(...ALIAS_MAP[alias]);
         }
       }
 
-      // 对每个匹配目标，找全文中所有出现位置
-      // 1. 精确匹配
-      // 2. 模糊匹配（最长子串，至少2字）
       matchTargets.forEach(target => {
         if (text.includes(target)) {
           let idx = 0;
@@ -90,8 +86,8 @@
             ranges.push([idx, idx + target.length]);
             idx += target.length;
           }
-        } else if (target.length >= 3) {
-          // 模糊：找最长可匹配子串
+        } else if (target.length >= 2) {
+          // 模糊：从最长子串往下找，至少2字
           for (let len = target.length - 1; len >= 2; len--) {
             let found = false;
             for (let start = 0; start <= target.length - len; start++) {
@@ -126,16 +122,19 @@
       }
     }
 
-    // 拼装 HTML
     let html = '';
     let pos = 0;
     merged.forEach(([start, end]) => {
       html += escapeHtml(text.substring(pos, start));
-      html += '<span class="answer-kw">' + escapeHtml(text.substring(start, end)) + '</span>';
+      html += '<span class="' + className + '">' + escapeHtml(text.substring(start, end)) + '</span>';
       pos = end;
     });
     html += escapeHtml(text.substring(pos));
     return html;
+  }
+
+  function highlightKeywords(text, keywords) {
+    return highlightText(text, keywords, 'answer-kw');
   }
 
   function buildList() {
@@ -183,11 +182,7 @@
       q.keywords.map((k, n) => `<div class="kw-item"><span class="kw-num">${n + 1}</span><span class="kw-text">${k}</span></div>`).join('') +
       '</div>';
 
-    let jingleHtml = q.jingle;
-    q.keywords.forEach(k => {
-      jingleHtml = jingleHtml.split(k).join(`<span class="jingle-keyword">${k}</span>`);
-    });
-    dom.jingleBody.innerHTML = jingleHtml;
+    dom.jingleBody.innerHTML = highlightText(q.jingle, q.keywords, 'jingle-keyword');
     dom.answerBody.innerHTML = highlightKeywords(q.answer, q.keywords);
 
     dom.sheetKeywords.hidden = true;
@@ -294,30 +289,24 @@
     const idx = list[cursor];
     const q = QUESTIONS[idx];
 
-    let jingleHtml = q.jingle;
-    q.keywords.forEach(k => {
-      jingleHtml = jingleHtml.split(k).join(`<span class="zoom-jingle-keyword">${k}</span>`);
-    });
-
     let html = '';
-    html += `<div class="zoom-chapter">${q.chapter}</div>`;
-    html += `<div class="zoom-question">${escapeHtml(q.question)}</div>`;
+    html += '<div class="zoom-chapter">' + escapeHtml(q.chapter) + '</div>';
+    html += '<div class="zoom-question">' + escapeHtml(q.question) + '</div>';
 
-    if (!dom.sheetKeywords.hidden) {
-      html += '<div class="zoom-sheet"><div class="zoom-sheet-title">骨架</div><div class="zoom-sheet-body">';
-      html += '<div class="zoom-kw-list">' +
-        q.keywords.map((k, n) => `<div class="zoom-kw-item"><span class="zoom-kw-num">${n + 1}</span><span class="zoom-kw-text">${escapeHtml(k)}</span></div>`).join('') +
-        '</div>';
-      html += '</div></div>';
-    }
+    // 骨架：始终显示
+    html += '<div class="zoom-sheet"><div class="zoom-sheet-title">骨架</div><div class="zoom-sheet-body">';
+    html += '<div class="zoom-kw-list">' +
+      q.keywords.map((k, n) => '<div class="zoom-kw-item"><span class="zoom-kw-num">' + (n + 1) + '</span><span class="zoom-kw-text">' + escapeHtml(k) + '</span></div>').join('') +
+      '</div>';
+    html += '</div></div>';
 
-    if (!dom.sheetJingle.hidden) {
-      html += '<div class="zoom-sheet zoom-sheet-jingle"><div class="zoom-sheet-title">串记</div><div class="zoom-sheet-body">' + jingleHtml + '</div></div>';
-    }
+    // 串记：始终显示，用通用高亮
+    html += '<div class="zoom-sheet zoom-sheet-jingle"><div class="zoom-sheet-title">串记</div><div class="zoom-sheet-body">' +
+      highlightText(q.jingle, q.keywords, 'zoom-jingle-keyword') + '</div></div>';
 
-    if (!dom.sheetAnswer.hidden) {
-      html += '<div class="zoom-sheet zoom-sheet-answer"><div class="zoom-sheet-title">全文</div><div class="zoom-sheet-body">' + highlightKeywords(q.answer, q.keywords) + '</div></div>';
-    }
+    // 全文：始终显示，关键词高亮
+    html += '<div class="zoom-sheet zoom-sheet-answer"><div class="zoom-sheet-title">全文</div><div class="zoom-sheet-body">' +
+      highlightKeywords(q.answer, q.keywords) + '</div></div>';
 
     dom.zoomBody.innerHTML = html;
     dom.zoomOverlay.hidden = false;
