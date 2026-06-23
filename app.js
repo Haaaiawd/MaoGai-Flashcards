@@ -54,11 +54,55 @@
   }
 
   function highlightKeywords(text, keywords) {
-    let html = escapeHtml(text);
-    keywords.forEach(k => {
-      const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      html = html.replace(new RegExp(escaped, 'g'), `<span class="answer-kw">${k}</span>`);
+    const ranges = [];
+
+    keywords.forEach(kw => {
+      // 找关键词在全文中最长的可匹配子串（至少 3 字）
+      let best = null;
+      if (text.includes(kw)) {
+        best = kw;
+      } else {
+        for (let len = kw.length - 1; len >= 3; len--) {
+          let found = false;
+          for (let start = 0; start <= kw.length - len; start++) {
+            const sub = kw.substring(start, start + len);
+            if (text.includes(sub)) { best = sub; found = true; break; }
+          }
+          if (found) break;
+        }
+      }
+      if (best) {
+        let idx = 0;
+        while ((idx = text.indexOf(best, idx)) !== -1) {
+          ranges.push([idx, idx + best.length]);
+          idx += best.length;
+        }
+      }
     });
+
+    if (ranges.length === 0) return escapeHtml(text);
+
+    // 合并重叠区间
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [ranges[0]];
+    for (let i = 1; i < ranges.length; i++) {
+      const last = merged[merged.length - 1];
+      if (ranges[i][0] <= last[1]) {
+        last[1] = Math.max(last[1], ranges[i][1]);
+      } else {
+        merged.push(ranges[i]);
+      }
+    }
+
+    // 拼装 HTML
+    let html = '';
+    let pos = 0;
+    merged.forEach(([start, end]) => {
+      html += escapeHtml(text.substring(pos, start));
+      html += '<span class="answer-kw">' + escapeHtml(text.substring(start, end)) + '</span>';
+      pos = end;
+    });
+    html += escapeHtml(text.substring(pos));
     return html;
   }
 
