@@ -1,12 +1,12 @@
 const CACHE_NAME = 'maogai-v1';
 const ASSETS = [
-  '/MaoGai-Flashcards/',
-  '/MaoGai-Flashcards/index.html',
-  '/MaoGai-Flashcards/styles.css',
-  '/MaoGai-Flashcards/app.js',
-  '/MaoGai-Flashcards/questions.js',
-  '/MaoGai-Flashcards/manifest.json',
-  '/MaoGai-Flashcards/favicon.svg'
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/app.js',
+  '/questions.js',
+  '/manifest.json',
+  '/favicon.svg'
 ];
 
 self.addEventListener('install', (e) => {
