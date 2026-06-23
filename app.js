@@ -129,7 +129,9 @@
   function show(type) {
     if (type === 'keywords') { dom.sheetKeywords.hidden = false; dom.btnKeywords.disabled = true; }
     if (type === 'jingle') { dom.sheetJingle.hidden = false; dom.btnJingle.disabled = true; }
-    if (type === 'answer') { dom.sheetAnswer.hidden = false; dom.btnAnswer.disabled = true; }
+    if (type === 'answer') {
+      dom.sheetAnswer.hidden = !dom.sheetAnswer.hidden;
+    }
   }
 
   function next(markState) {
